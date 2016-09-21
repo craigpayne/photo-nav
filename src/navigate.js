@@ -8,7 +8,7 @@
 (function($){
 
     var handleKeyDown;
-    var handleScroll;
+    var handleWindow;
     var navigate;
     var generateData;
     var options;
@@ -28,7 +28,9 @@
         speed: 500,
         keys: {            
             left: 37,
-            right: 39            
+            right: 39,
+            j: 74,
+            k: 75  
         }
     };
 
@@ -43,8 +45,7 @@
             // Keyboard event
             //--------------------
             handleKeyDown = function(e){
-                if(!e) { var e = window.event; }
-
+                if(!e) { var e = window.event; }                
                 switch(e.keyCode) {                      
                     case options.keys.left:
                         navigate(0);
@@ -52,6 +53,12 @@
                     case options.keys.right:
                         navigate(1);
                         break;                    
+                    case options.keys.j:
+                        navigate(0);
+                        break;
+                    case options.keys.k:
+                        navigate(1);
+                        break;                                            
                 }
              
             };
@@ -59,7 +66,7 @@
             //--------------------
             // Scroll event
             //--------------------
-            handleScroll = function() {
+            handleWindow = function() {
                 var win = $(window);
 
                 var viewport = {
@@ -85,14 +92,19 @@
                     
                 }
 
-                if (viewport.top <= $elements[0].coordinates.top) {
-                    $elements[0].active = true;
-                }
+                // onload setup default states
+                if (viewport.top <= $elements[0].coordinates.top) $elements[0].active = true;
+                if (viewport.top >= $elements[$elements.length-1].coordinates.top) $elements[$elements.length-1].active = true;
 
-                if (viewport.top >= $elements[$elements.length-1].coordinates.top) {
-                    $elements[$elements.length-1].active = true;
-                }                
+            }
 
+            //------------------------------
+            // Reinitialze object settings
+            //------------------------------
+            reinitialize = function() {
+                $elements = [];
+                generateData();
+                handleWindow();
             }
           
             //--------------------------
@@ -145,12 +157,11 @@
 
             //---------------------------
             // Get next and prev element
-            //------------------------
+            //---------------------------
             getPrevNextElement = function() {
                 var $cur_element = getCurrentElement();
                 var $prev_next_elements = []
 
-               
                 if ($cur_element.id == 0 ) { 
                     $prev_next_elements.push($cur_element); }
                 else {
@@ -163,33 +174,23 @@
                     $prev_next_elements.push(getElementById($cur_element.id+1));
                 }
 
-                return $prev_next_elements;
-               
+                return $prev_next_elements;  
             }
 
             //------------------------
             // Keyboard navigation
             //------------------------
             navigate = function(x) {
-        
                 var $elm = getCurrentElement();
                 var $prev_next = getPrevNextElement();
-
-                if ($(window).scrollTop() != $elm.coordinates.top) {
+                
+                if (Math.floor($(window).scrollTop()) != Math.floor($elm.coordinates.top)) {
                     scrollTo($elm.coordinates.top);
                 }
 
-
-                if ($(window).scrollTop() == $elm.coordinates.top) {
-                    console.log('here');
-                    console.log("x"+x)
-                    console.log($prev_next);
-                    // $prev_next
+                if (Math.floor($(window).scrollTop()) == Math.floor($elm.coordinates.top)) {                                    
                     scrollTo($prev_next[x].coordinates.top);
-
                 }
-
-
             }
             
 
@@ -203,14 +204,14 @@
             }
           
             generateData();
-            handleScroll();
+            handleWindow();
 
             $(document).bind('keydown', handleKeyDown);
-            $(window).bind('scroll', handleScroll);  
+            $(window).bind('scroll', handleWindow); 
+            $(window).bind('resize', reinitialize);  
 
             return this;
         },
-
 
         destroy : function(){
             return this;
